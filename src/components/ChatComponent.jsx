@@ -27,7 +27,7 @@ const ChatComponent = ({ setShowChat }) => {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer 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`, // replace with your actual API key
+          'Authorization': `Bearer process.env.OPENAI_API_KEY;`, // replace with your actual API key
         },
         body: JSON.stringify({
           model: 'gpt-3.5-turbo',
@@ -87,3 +87,5 @@ const ChatComponent = ({ setShowChat }) => {
 };
 
 export default ChatComponent;
+
+//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
