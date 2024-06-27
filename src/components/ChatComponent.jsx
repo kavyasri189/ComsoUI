@@ -27,7 +27,7 @@ const ChatComponent = ({ setShowChat }) => {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer process.env.OPENAI_API_KEY;`, // replace with your actual API key
+          'Authorization': `Bearer ${process.env.OPENAI_API_KEY}`, // use environment variable
         },
         body: JSON.stringify({
           model: 'gpt-3.5-turbo',
