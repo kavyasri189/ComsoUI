@@ -1,0 +1,90 @@
+/* src/styles/ChatComponent.css */
+
+body{
+  background-color: black;
+}
+
+.chat-container-2{
+  display: flex;
+  flex-direction: column;
+  height: 95vh;
+  max-width: 600px;
+  margin: auto;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  overflow: hidden;
+  
+}
+
+.messages {
+  flex: 1;
+  padding: 10px;
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  max-height: 78vh;
+}
+
+.message {
+  max-width: 70%;
+  padding: 10px;
+  border-radius: 8px;
+  margin-bottom: 10px;
+  word-wrap: break-word;
+}
+
+.user-message {
+  background-color: #007bff;
+  color: #fff;
+  align-self: flex-end;
+  text-align: right;
+}
+
+.ai-message {
+  background-color: #007bff;
+  color: #fff;
+  align-self: flex-start;
+  text-align: left;
+}
+
+.message-form {
+  display: flex;
+  padding: 10px;
+  border-top: 1px solid #ccc;
+}
+
+.message-form input {
+  flex: 1;
+  padding: 10px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  margin-right: 10px;
+}
+
+.message-form button {
+  padding: 10px 20px;
+  border: none;
+  background-color: green;
+  color: #fff;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.message-form button:hover {
+  background-color: green;
+}
+
+.end-chat-button {
+  padding: 10px 20px;
+  margin: 10px;
+  border: none;
+  background-color: #ff4d4d; /* Red background */
+  color: #fff; /* White text color */
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.end-chat-button:hover {
+  background-color: #cc0000; /* Darker red on hover */
+}
+

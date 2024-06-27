@@ -1,0 +1,42 @@
+/* App.css */
+
+.App {
+  text-align: center;
+}
+
+nav {
+  background-color: purple; /* Orangish-yellow */
+  padding: 1rem;
+}
+
+nav ul {
+  list-style-type: none; /* Remove bullets */
+  padding: 0;
+  margin: 0;
+  display: flex;
+  justify-content: center;
+}
+
+nav ul li {
+  margin: 0 1rem;
+}
+
+nav ul li a {
+  text-decoration: none;
+  color: white;
+  font-weight: bold;
+}
+
+.chart-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-direction: column;
+  height: 100vh;
+}
+
+.chart {
+  width: 80%;
+  max-width: 600px; /* Ensure charts are not too large */
+  margin: 20px auto;
+}
