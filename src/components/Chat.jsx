@@ -1,25 +1,59 @@
-import React, { useState, useEffect } from 'react';
-import '../styles/ChatComponent.css'; // Adjust the import path
-import RexIconAvatar from '../assets/images/RexIconAvatar.jpg';
 
-const ChatComponent = ({ setShowChat }) => {
+import React, { useState, useEffect } from 'react';
+import '../styles/Chat.css';
+import RexIconAvatar from '../assets/images/RexIconAvatar.jpg';
+import { db } from '../notifications/firebase';
+import { collection, addDoc, getDocs, deleteDoc, doc, serverTimestamp } from 'firebase/firestore';
+
+const Chat = ({ setShowChat, userId }) => {
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState('');
 
-  // Load chat history from localStorage when the component mounts
   useEffect(() => {
-    const savedSession = localStorage.getItem('chatSession');
-    if (savedSession) {
-      setMessages(JSON.parse(savedSession));
-    }
+    const logUserActivity = async () => {
+      await addDoc(collection(db, 'userActivity'), {
+        userId: userId,
+        timestamp: serverTimestamp(),
+        type: 'login',
+      });
+    };
+
+    logUserActivity();
+  }, [userId]);
+
+  useEffect(() => {
+    const fetchMessages = async () => {
+      try {
+        const snapshot = await getDocs(collection(db, 'chatMessages'));
+        const fetchedMessages = snapshot.docs.map(doc => doc.data());
+        setMessages(fetchedMessages);
+      } catch (error) {
+        console.error('Error fetching messages:', error);
+      }
+    };
+
+    fetchMessages();
   }, []);
 
-  // Save chat history to localStorage whenever messages change
   useEffect(() => {
     if (messages.length > 0) {
-      localStorage.setItem('chatSession', JSON.stringify(messages));
+      const saveMessage = async () => {
+        try {
+          const newMessage = messages[messages.length - 1];
+          await addDoc(collection(db, 'chatMessages'), newMessage);
+          await addDoc(collection(db, 'messageStats'), {
+            userId: userId,
+            timestamp: serverTimestamp(),
+            message: newMessage.content,
+          });
+        } catch (error) {
+          console.error('Error saving message:', error);
+        }
+      };
+
+      saveMessage();
     }
-  }, [messages]);
+  }, [messages, userId]);
 
   const fetchChatResponse = async (input) => {
     try {
@@ -27,7 +61,7 @@ const ChatComponent = ({ setShowChat }) => {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          //'Authorization': `Bearer ${process.env.OPENAI_API_KEY}`, // use environment variable
+          'Authorization': `Bearer `, // use environment variable
         },
         body: JSON.stringify({
           model: 'gpt-3.5-turbo',
@@ -56,9 +90,16 @@ const ChatComponent = ({ setShowChat }) => {
     setMessages((prevMessages) => [...prevMessages, aiMessage]);
   };
 
-  const handleEndChat = () => {
+  const handleEndChat = async () => {
     setMessages([]);
-    localStorage.removeItem('chatSession');
+    try {
+      const snapshot = await getDocs(collection(db, 'chatMessages'));
+      snapshot.forEach((docSnapshot) => {
+        deleteDoc(doc(db, 'chatMessages', docSnapshot.id));
+      });
+    } catch (error) {
+      console.error('Error ending chat:', error);
+    }
     setShowChat(false); // Return to landing page
   };
 
@@ -86,6 +127,5 @@ const ChatComponent = ({ setShowChat }) => {
   );
 };
 
-export default ChatComponent;
+export default Chat;
 
-//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

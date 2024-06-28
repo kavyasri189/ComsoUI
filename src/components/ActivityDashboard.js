@@ -1,139 +1,119 @@
-import React, { useEffect, useState } from 'react';
-import { Line, Bar, Doughnut } from 'react-chartjs-2';
-import { Chart as ChartJS, registerables } from 'chart.js';
-import { fetchUserActivityData } from '../api'; // Mock function to fetch data
-import '../styles/ActivityDashboard.css';
 
-// Register Chart.js components
-ChartJS.register(...registerables);
+import React, { useEffect, useState } from 'react';
+import { db } from '../notifications/firebase';
+import { collection, getDocs } from 'firebase/firestore';
+import { Bar } from 'react-chartjs-2';
+import 'chart.js/auto';
+import { Chart as ChartJS, TimeScale } from 'chart.js';
+import 'chartjs-adapter-date-fns';
+
+ChartJS.register(TimeScale);
 
 const ActivityDashboard = () => {
-  const [activeUsers, setActiveUsers] = useState([]);
-  const [messagesSent, setMessagesSent] = useState([]);
-  const [userEngagement, setUserEngagement] = useState([]);
-  
-  // Step 1: State variables for time frame selection
-  const [startDate, setStartDate] = useState('');
-  const [endDate, setEndDate] = useState('');
+  const [userActivity, setUserActivity] = useState([]);
+  const [messageStats, setMessageStats] = useState([]);
 
   useEffect(() => {
-    const fetchData = async () => {
-      const data = await fetchUserActivityData();
-      setActiveUsers(data.activeUsers);
-      setMessagesSent(data.messagesSent);
-      setUserEngagement(data.userEngagement);
+    const fetchUserActivity = async () => {
+      try {
+        const snapshot = await getDocs(collection(db, 'userActivity'));
+        const activityData = snapshot.docs.map(doc => doc.data()).sort((a, b) => a.timestamp.seconds - b.timestamp.seconds);
+        console.log('User Activity Data:', activityData);
+        setUserActivity(activityData);
+      } catch (error) {
+        console.error('Error fetching user activity:', error);
+      }
     };
 
-    fetchData();
+    const fetchMessageStats = async () => {
+      try {
+        const snapshot = await getDocs(collection(db, 'messageStats'));
+        const messageData = snapshot.docs.map(doc => doc.data()).sort((a, b) => a.timestamp.seconds - b.timestamp.seconds);
+        console.log('Message Stats Data:', messageData);
+        setMessageStats(messageData);
+      } catch (error) {
+        console.error('Error fetching message stats:', error);
+      }
+    };
+
+    fetchUserActivity();
+    fetchMessageStats();
   }, []);
 
-  // Step 1: UI for date selection (example implementation)
-  const handleDateChange = (event) => {
-    const { name, value } = event.target;
-    if (name === 'startDate') {
-      setStartDate(value);
-    } else if (name === 'endDate') {
-      setEndDate(value);
-    }
+  const aggregateDataBy30Minutes = (data) => {
+    const aggregatedData = {};
+    data.forEach(item => {
+      const date = new Date(item.timestamp.seconds * 1000);
+      const minutes = date.getMinutes() >= 30 ? 30 : 0;
+      date.setMinutes(minutes, 0, 0);
+      const key = date.toISOString();
+      if (!aggregatedData[key]) {
+        aggregatedData[key] = 0;
+      }
+      aggregatedData[key] += 1;
+    });
+    return aggregatedData;
   };
 
-  // Step 3: Data filtering function
-  const filterChartData = (data, startDate, endDate) => {
-    // Implement logic to filter data based on startDate and endDate
-    // Example:
-    // return data.filter(item => item.date >= startDate && item.date <= endDate);
-    return data; // Placeholder return
-  };
+  const userActivityBy30Minutes = aggregateDataBy30Minutes(userActivity);
+  const messageStatsBy30Minutes = aggregateDataBy30Minutes(messageStats);
 
-  const activeUsersData = {
-    labels: activeUsers.map(data => data.date),
+  const userActivityData = {
+    labels: Object.keys(userActivityBy30Minutes),
     datasets: [
       {
-        label: 'Active Users',
-        data: filterChartData(activeUsers, startDate, endDate).map(data => data.count),
-        borderColor: 'rgba(75, 192, 192, 1)',
-        backgroundColor: 'rgba(75, 192, 192, 0.2)',
-        fill: true,
+        label: 'User Logins',
+        data: Object.values(userActivityBy30Minutes),
+        backgroundColor: 'purple',
       },
     ],
   };
 
-  const messagesSentData = {
-    labels: messagesSent.map(data => data.date),
+  const messageStatsData = {
+    labels: Object.keys(messageStatsBy30Minutes),
     datasets: [
       {
         label: 'Messages Sent',
-        data: filterChartData(messagesSent, startDate, endDate).map(data => data.count),
-        borderColor: 'rgba(153, 102, 255, 1)',
-        backgroundColor: 'rgba(153, 102, 255, 0.2)',
-        fill: true,
+        data: Object.values(messageStatsBy30Minutes),
+        backgroundColor: 'purple',
       },
     ],
   };
 
-  const userEngagementData = {
-    labels: userEngagement.map(data => data.activity),
-    datasets: [
-      {
-        label: 'User Engagement',
-        data: userEngagement.map(data => data.count),
-        backgroundColor: [
-          'rgba(255, 99, 132, 0.2)',
-          'rgba(54, 162, 235, 0.2)',
-          'rgba(255, 206, 86, 0.2)',
-          'rgba(75, 192, 192, 0.2)',
-          'rgba(153, 102, 255, 0.2)',
-          'rgba(255, 159, 64, 0.2)',
-        ],
-        borderColor: [
-          'rgba(255, 99, 132, 1)',
-          'rgba(54, 162, 235, 1)',
-          'rgba(255, 206, 86, 1)',
-          'rgba(75, 192, 192, 1)',
-          'rgba(153, 102, 255, 1)',
-          'rgba(255, 159, 64, 1)',
-        ],
-        borderWidth: 1,
+  const options = {
+    scales: {
+      x: {
+        type: 'time',
+        time: {
+          unit: 'minute',
+          stepSize: 30,
+          displayFormats: {
+            minute: 'MMM d, HH:mm',
+          },
+          tooltipFormat: 'MMM d, HH:mm',
+        },
+        ticks: {
+          source: 'data',
+          autoSkip: true,
+          maxRotation: 0,
+          minRotation: 0,
+        },
       },
-    ],
+      y: {
+        beginAtZero: true,
+        suggestedMin: 0,
+        suggestedMax: 10,
+      },
+    },
   };
 
   return (
-    <div className="activity-dashboard">
-      <h1>Activity Dashboard</h1>
-      
-      {/* Step 1: Date selection UI (example) */}
-      <div className="date-selection" >
-        <label className="component-a">Start Date:</label>
-        <input
-          type="date"
-          name="startDate"
-          value={startDate}
-          onChange={handleDateChange}
-        />
+    <div>
+      <h2>User Activity</h2>
+      <Bar data={userActivityData} options={options} />
 
-        <label className="component-b">End Date:</label>
-        <input
-          type="date"
-          name="endDate"
-          value={endDate}
-          onChange={handleDateChange}
-        />
-      </div>
-
-      {/* Existing chart components */}
-      <div className="chart-container component">
-        <h2>Active Users</h2>
-        <Line data={activeUsersData} className="component"/>
-      </div>
-      <div className="chart-container component">
-        <h2>Messages Sent</h2>
-        <Bar data={messagesSentData} className="component"/>
-      </div>
-      <div className="chart-container component">
-        <h2>User Engagement</h2>
-        <Doughnut data={userEngagementData} className="component" />
-      </div>
+      <h2>Message Statistics</h2>
+      <Bar data={messageStatsData} options={options} />
     </div>
   );
 };

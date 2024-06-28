@@ -1,7 +1,7 @@
 import React from 'react';
-import '../styles/LandingPage.css'; // Ensure the CSS file is imported
+import '../styles/Login.css'; // Ensure the CSS file is imported
 import RexIconAvatar from '../assets/images/RexIconAvatar.jpg';
-const LandingPage = ({ onStartChat }) => {
+const Login = ({ onStartChat }) => {
   return (
     
     <div className="landing-page">
@@ -18,4 +18,4 @@ const LandingPage = ({ onStartChat }) => {
   );
 };
 
-export default LandingPage;
+export default Login;

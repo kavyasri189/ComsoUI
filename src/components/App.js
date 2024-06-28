@@ -1,19 +1,24 @@
+
 import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Route, Routes, Link } from 'react-router-dom';
-import LandingPage from './LandingPage';
-import ChatComponent from './ChatComponent';
-import ActivityDashboard from './ActivityDashboard'; // Import the new dashboard component
+import { v4 as uuidv4 } from 'uuid'; // Import UUID library
+import Login from './Login';
+import ChatComponent from './Chat';
+import ActivityDashboard from './ActivityDashboard';
 import '../styles/App.css';
 import { generateToken, messaging } from '../notifications/firebase';
-import { onMessage } from "firebase/messaging";
+import { onMessage } from 'firebase/messaging';
 
 function App() {
+  const [userId] = useState(uuidv4()); // Generate unique user ID
+
   useEffect(() => {
     generateToken();
     onMessage(messaging, (payload) => {
-      console.log(payload);
+      console.log('Message received. ', payload);
     });
   }, []);
+
   const [showChat, setShowChat] = useState(false);
 
   const handleStartChat = () => {
@@ -34,18 +39,18 @@ function App() {
           </ul>
         </nav>
         <Routes>
-          <Route 
-            exact 
-            path="/" 
+          <Route
+            exact
+            path="/"
             element={
               !showChat ? (
-                <LandingPage onStartChat={handleStartChat} />
+                <Login onStartChat={handleStartChat} />
               ) : (
-                <ChatComponent setShowChat={setShowChat} />
+                <ChatComponent setShowChat={setShowChat} userId={userId} />
               )
             }
           />
-          <Route path="/dashboard" element={<ActivityDashboard />} />
+          <Route path="/dashboard" element={<ActivityDashboard userId={userId} />} />
         </Routes>
       </div>
     </Router>
@@ -53,3 +58,4 @@ function App() {
 }
 
 export default App;
+
